@@ -1,0 +1,684 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Financial Manager | Secure Access</title>
+    <!-- Load Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                },
+            },
+        }
+    </script>
+    <!-- Load CryptoJS for AES Encryption -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
+    
+    <!-- Load EmailJS -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="text/javascript">
+        (function() {
+            // Your exact EmailJS Public Key
+            emailjs.init("Qao9oqZEyQbiMCFzh"); 
+        })();
+    </script>
+
+    <style>
+        #transaction-list::-webkit-scrollbar { width: 6px; }
+        #transaction-list::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
+        #transaction-list::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
+        #transaction-list::-webkit-scrollbar-thumb:hover { background: #64748b; }
+        .transaction-item:hover .delete-btn { opacity: 1; }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans h-full flex items-center justify-center p-4">
+
+    <!-- Step 1: Authentication Screen -->
+    <div id="auth-screen" class="w-full max-w-sm">
+        <div class="bg-white shadow-xl rounded-2xl p-6 md:p-8 border border-gray-100">
+            <div class="flex justify-center mb-4">
+                <div class="bg-blue-100 p-3 rounded-full text-blue-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M16.5 10.5V6.75a4.5 4.5 0 1 0-9 0v3.75m-.75 11.25h10.5a2.25 2.25 0 0 0 2.25-2.25v-6.75a2.25 2.25 0 0 0-2.25-2.25H6.75a2.25 2.25 0 0 0-2.25 2.25v6.75a2.25 2.25 0 0 0 2.25 2.25Z" />
+                    </svg>
+                </div>
+            </div>
+            <h2 id="auth-title" class="text-2xl font-bold text-gray-800 text-center mb-2">Admin Login</h2>
+            <p id="auth-subtitle" class="text-gray-500 text-center text-sm mb-6">Enter your credentials to access the ledger.</p>
+            
+            <form id="auth-form" class="space-y-4">
+                <div>
+                    <label for="auth-id" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                    <input type="email" id="auth-id" placeholder="admin@example.com" class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <div>
+                    <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input type="password" id="password" placeholder="••••••••" class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                </div>
+                <button type="submit" id="auth-submit-btn" class="w-full bg-blue-600 text-white font-semibold py-2.5 px-4 rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-200 mt-2">
+                    Verify Identity
+                </button>
+            </form>
+            <p id="auth-error" class="text-red-500 text-sm mt-4 text-center hidden font-medium"></p>
+        </div>
+    </div>
+
+    <!-- Step 2: 2FA Verification Screen -->
+    <div id="tfa-screen" class="w-full max-w-sm hidden">
+        <div class="bg-white shadow-xl rounded-2xl p-6 md:p-8 border border-gray-100 text-center">
+            <div class="flex justify-center mb-4">
+                <div class="bg-indigo-100 p-3 rounded-full text-indigo-600">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
+                    </svg>
+                </div>
+            </div>
+            <h2 class="text-2xl font-bold text-gray-800 mb-2">Check Your Email</h2>
+            <p class="text-gray-500 text-sm mb-6">We've sent a 6-digit security code to <span id="tfa-email-display" class="font-bold text-gray-700"></span>.</p>
+            
+            <form id="tfa-form" class="space-y-4">
+                <div>
+                    <input type="text" id="tfa-code" placeholder="000000" maxlength="6" class="w-full px-4 py-3 text-center text-2xl tracking-widest border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" required autocomplete="off">
+                </div>
+                <button type="submit" class="w-full bg-indigo-600 text-white font-semibold py-2.5 px-4 rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition duration-200 mt-2">
+                    Unlock Dashboard
+                </button>
+            </form>
+            <p id="tfa-error" class="text-red-500 text-sm mt-4 text-center hidden font-medium"></p>
+        </div>
+    </div>
+
+    <!-- Step 3: Main App Container -->
+    <div id="app-container" class="w-full max-w-5xl bg-white shadow-lg rounded-2xl p-6 md:p-8 hidden my-8">
+        <header class="mb-8 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 border-b border-gray-200 pb-4">
+            <div>
+                <h1 class="text-2xl font-bold text-gray-900">Financial Dashboard</h1>
+                <p class="text-sm text-gray-500 mt-1 flex items-center gap-1.5">
+                    <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
+                    Verified Session: <span id="admin-display-name" class="font-semibold text-gray-700"></span>
+                </p>
+            </div>
+            
+            <div class="flex items-center gap-3 flex-wrap">
+                <select id="month-filter" class="px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white text-gray-700 font-medium text-sm">
+                    <option value="all">All Time</option>
+                </select>
+                
+                <!-- Privacy Toggle Button -->
+                <button id="toggle-privacy-btn" class="text-sm px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium transition duration-200 flex items-center gap-2" title="Hide/Show Balances">
+                    <svg id="eye-open-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" />
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                    </svg>
+                    <svg id="eye-closed-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 hidden">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" />
+                    </svg>
+                    <span id="privacy-text" class="hidden sm:inline">Hide</span>
+                </button>
+
+                <!-- Logout Button -->
+                <button id="logout-btn" class="text-sm px-4 py-2 bg-red-50 text-red-600 border border-red-100 rounded-lg hover:bg-red-100 font-semibold transition duration-200 flex items-center gap-2">
+                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" class="w-4 h-4">
+                        <path stroke-linecap="round" stroke-linejoin="round" d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15m-3 0-3-3m0 0 3-3m-3 3H15" />
+                    </svg>
+                    Logout
+                </button>
+            </div>
+        </header>
+
+        <!-- Summary Section -->
+        <section id="summary" class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4 mb-8">
+            <div class="bg-blue-50 p-4 rounded-xl shadow-sm flex flex-col justify-center border border-blue-100">
+                <div class="flex items-center space-x-2 mb-2">
+                    <div class="bg-blue-100 p-1.5 rounded-md"><svg class="w-4 h-4 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a2.25 2.25 0 0 1-2.25 2.25H5.25a2.25 2.25 0 0 1-2.25-2.25V5.25A2.25 2.25 0 0 1 5.25 3h13.5A2.25 2.25 0 0 1 21 5.25V12ZM10.5 16.5c0 .966-.784 1.75-1.75 1.75h-1.5a1.75 1.75 0 1 1 0-3.5h1.5a1.75 1.75 0 0 1 1.75 1.75v.5Z" /></svg></div>
+                    <h2 class="text-xs font-bold text-blue-700 uppercase tracking-wide">Net Balance</h2>
+                </div>
+                <p id="balance" class="text-xl font-bold text-blue-900 break-all">0 RWF</p>
+            </div>
+            
+            <div class="bg-green-50 p-4 rounded-xl shadow-sm flex flex-col justify-center border border-green-100">
+                <div class="flex items-center space-x-2 mb-2">
+                    <div class="bg-green-100 p-1.5 rounded-md"><svg class="w-4 h-4 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" /></svg></div>
+                    <h2 class="text-xs font-bold text-green-700 uppercase tracking-wide">Income</h2>
+                </div>
+                <p id="total-income" class="text-xl font-bold text-green-900 break-all">0 RWF</p>
+            </div>
+
+            <div class="bg-red-50 p-4 rounded-xl shadow-sm flex flex-col justify-center border border-red-100">
+                <div class="flex items-center space-x-2 mb-2">
+                    <div class="bg-red-100 p-1.5 rounded-md"><svg class="w-4 h-4 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6 9 12.75l4.306-4.306a11.95 11.95 0 0 1 5.814 5.518l2.74 1.22m0 0-5.94 2.281m5.94-2.28-2.28-5.941" /></svg></div>
+                    <h2 class="text-xs font-bold text-red-700 uppercase tracking-wide">Expense</h2>
+                </div>
+                <p id="total-expense" class="text-xl font-bold text-red-900 break-all">0 RWF</p>
+            </div>
+
+            <div class="bg-purple-50 p-4 rounded-xl shadow-sm flex flex-col justify-center border border-purple-100">
+                <div class="flex items-center space-x-2 mb-2">
+                    <div class="bg-purple-100 p-1.5 rounded-md"><svg class="w-4 h-4 text-purple-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5-3.75H3.75" /></svg></div>
+                    <h2 class="text-xs font-bold text-purple-700 uppercase tracking-wide">Savings</h2>
+                </div>
+                <p id="total-savings" class="text-xl font-bold text-purple-900 break-all">0 RWF</p>
+            </div>
+
+            <div class="bg-orange-50 p-4 rounded-xl shadow-sm flex flex-col justify-center border border-orange-100">
+                <div class="flex items-center space-x-2 mb-2">
+                    <div class="bg-orange-100 p-1.5 rounded-md"><svg class="w-4 h-4 text-orange-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg></div>
+                    <h2 class="text-xs font-bold text-orange-700 uppercase tracking-wide">Active Debt</h2>
+                </div>
+                <p id="total-debt" class="text-xl font-bold text-orange-900 break-all">0 RWF</p>
+            </div>
+        </section>
+
+        <!-- Add Transaction Form -->
+        <section id="add-transaction" class="mb-8 bg-gray-50 p-5 rounded-xl border border-gray-200">
+            <h2 class="text-lg font-bold text-gray-800 mb-4">Log New Transaction</h2>
+            <form id="transaction-form" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <div class="md:col-span-2 lg:col-span-1">
+                    <label for="description" class="block text-sm font-medium text-gray-700 mb-1">Description</label>
+                    <input type="text" id="description" placeholder="e.g., Salary, Shop Debt" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" required>
+                </div>
+                <div>
+                    <label for="amount" class="block text-sm font-medium text-gray-700 mb-1">Amount (RWF)</label>
+                    <input type="number" id="amount" placeholder="0.00" min="0.01" step="0.01" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" required>
+                </div>
+                <div>
+                    <label for="transaction-date" class="block text-sm font-medium text-gray-700 mb-1">Date</label>
+                    <input type="date" id="transaction-date" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white" required>
+                </div>
+                <div class="md:col-span-2 lg:col-span-1">
+                    <label for="type" class="block text-sm font-medium text-gray-700 mb-1">Transaction Type</label>
+                    <select id="type" class="w-full px-3 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
+                        <option value="income">Income (+ Balance)</option>
+                        <option value="expense">Expense (- Balance)</option>
+                        <option value="savings">Savings (- Balance)</option>
+                        <option value="log_debt">Log New Debt (+ Debt)</option>
+                        <option value="pay_debt">Pay Off Debt (- Balance, - Debt)</option>
+                    </select>
+                </div>
+                <div class="flex items-end md:col-span-2 lg:col-span-4">
+                    <button type="submit" class="w-full bg-gray-900 text-white font-semibold py-2.5 px-4 rounded-lg shadow-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2 transition duration-200">
+                        Save Transaction to Ledger
+                    </button>
+                </div>
+            </form>
+            <p id="form-error" class="text-red-500 text-sm mt-3 hidden font-medium"></p>
+        </section>
+
+        <!-- Transaction List -->
+        <section id="history">
+            <div class="flex justify-between items-center mb-4">
+                <h2 class="text-lg font-bold text-gray-800">Ledger History</h2>
+                <button id="show-clear-btn" class="text-sm text-red-600 hover:text-red-800 font-semibold transition duration-200">Erase Database</button>
+            </div>
+            <ul id="transaction-list" class="max-h-80 overflow-y-auto pr-2 space-y-2">
+                <li id="no-transactions" class="text-gray-500 text-center py-8 bg-gray-50 rounded-lg border border-dashed border-gray-300">No entries in the ledger yet.</li>
+            </ul>
+        </section>
+
+        <!-- App Summary & Profile Footer -->
+        <footer class="mt-12 pt-8 border-t border-gray-200 flex flex-col md:flex-row items-center md:items-start gap-6 text-gray-600 bg-gray-50 p-6 rounded-xl border">
+            <img src="https://ui-avatars.com/api/?name=Irene+SIBO&background=0D8ABC&color=fff&size=128" alt="My Photo" class="w-20 h-20 rounded-full object-cover border-4 border-white shadow-md">
+            <div class="text-center md:text-left">
+                <h3 class="text-base font-bold text-gray-900">About This Tracker</h3>
+                <p class="text-sm mt-2 leading-relaxed max-w-3xl text-gray-600">
+                    This is a personal, secure financial ledger engineered to manage daily income, track expenses, and monitor debt repayment in RWF. Built completely client-side, it uses AES encryption to ensure that all financial data remains strictly local to this device, providing complete privacy and total control over my personal financial health.
+                </p>
+            </div>
+        </footer>
+    </div>
+
+    <!-- Confirmation Modal (hidden by default) -->
+    <div id="modal-backdrop" class="fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center p-4 hidden z-50 transition-opacity">
+        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm">
+            <div class="flex items-center gap-3 mb-4 text-red-600">
+                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3Z" /></svg>
+                <h3 class="text-xl font-bold text-gray-900">Confirm Deletion</h3>
+            </div>
+            <p class="text-gray-600 mb-6 leading-relaxed">Are you absolutely sure you want to delete all transaction data? This action will permanently erase your ledger and cannot be undone.</p>
+            <div class="flex justify-end gap-3">
+                <button id="cancel-clear-btn" class="px-4 py-2 bg-gray-100 text-gray-800 font-medium rounded-lg hover:bg-gray-200 transition duration-200">Cancel</button>
+                <button id="confirm-clear-btn" class="px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 shadow-md transition duration-200">Yes, Erase Data</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            // --- UI Elements ---
+            const authScreen = document.getElementById('auth-screen');
+            const tfaScreen = document.getElementById('tfa-screen');
+            const appContainer = document.getElementById('app-container');
+            
+            const authForm = document.getElementById('auth-form');
+            const authIdInput = document.getElementById('auth-id');
+            const passwordInput = document.getElementById('password');
+            const authErrorEl = document.getElementById('auth-error');
+            const authTitle = document.getElementById('auth-title');
+            const authSubtitle = document.getElementById('auth-subtitle');
+            const authSubmitBtn = document.getElementById('auth-submit-btn');
+            
+            const tfaForm = document.getElementById('tfa-form');
+            const tfaCodeInput = document.getElementById('tfa-code');
+            const tfaErrorEl = document.getElementById('tfa-error');
+            const tfaEmailDisplay = document.getElementById('tfa-email-display');
+
+            const logoutBtn = document.getElementById('logout-btn');
+            const adminDisplayName = document.getElementById('admin-display-name');
+            
+            const togglePrivacyBtn = document.getElementById('toggle-privacy-btn');
+            const eyeOpenIcon = document.getElementById('eye-open-icon');
+            const eyeClosedIcon = document.getElementById('eye-closed-icon');
+            const privacyText = document.getElementById('privacy-text');
+
+            // --- App Elements ---
+            const balanceEl = document.getElementById('balance');
+            const incomeEl = document.getElementById('total-income');
+            const expenseEl = document.getElementById('total-expense');
+            const savingsEl = document.getElementById('total-savings');
+            const debtEl = document.getElementById('total-debt');
+            const listEl = document.getElementById('transaction-list');
+            const form = document.getElementById('transaction-form');
+            const descriptionInput = document.getElementById('description');
+            const amountInput = document.getElementById('amount');
+            const dateInput = document.getElementById('transaction-date');
+            const typeSelect = document.getElementById('type');
+            const formErrorEl = document.getElementById('form-error');
+            const monthFilterEl = document.getElementById('month-filter');
+
+            const modalBackdrop = document.getElementById('modal-backdrop');
+            const showClearBtn = document.getElementById('show-clear-btn');
+            const cancelClearBtn = document.getElementById('cancel-clear-btn');
+            const confirmClearBtn = document.getElementById('confirm-clear-btn');
+
+            // --- State ---
+            let transactions = [];
+            const ENCRYPTED_STORAGE_KEY = 'transactions_encrypted';
+            const ADMIN_IDENTITY_KEY = 'admin_identity';
+            
+            let isSetupMode = !localStorage.getItem(ADMIN_IDENTITY_KEY);
+            let expected2FACode = "";
+            let pendingAuthData = {}; 
+            let isPrivacyMode = false;
+
+            // Configure auth UI based on mode
+            if (isSetupMode) {
+                authTitle.textContent = "Set Up Admin Account";
+                authSubtitle.textContent = "Create your master credentials. These will be required to access your financial data.";
+                authSubmitBtn.textContent = "Create Account & Enter";
+            }
+
+            dateInput.valueAsDate = new Date();
+
+            // --- Authentication & REAL EmailJS Functions ---
+            
+            function send2FAEmail(email) {
+                // Generate a random 6 digit code
+                expected2FACode = Math.floor(100000 + Math.random() * 900000).toString();
+                
+                const submitBtn = document.querySelector('#auth-submit-btn');
+                const originalText = submitBtn.textContent;
+                submitBtn.textContent = "Sending Email...";
+                submitBtn.disabled = true;
+
+                const templateParams = {
+                    to_email: email,
+                    security_code: expected2FACode
+                };
+
+                // Exact Keys Implemented Here
+                emailjs.send('service_tdhrmp9', 'template_o5mi6ms', templateParams)
+                    .then(function(response) {
+                        console.log('Email sent successfully!', response.status, response.text);
+                        
+                        authScreen.classList.add('hidden');
+                        tfaScreen.classList.remove('hidden');
+                        tfaEmailDisplay.textContent = email;
+                        tfaCodeInput.focus();
+                        
+                        submitBtn.textContent = originalText;
+                        submitBtn.disabled = false;
+                    }, function(error) {
+                        console.error('Failed to send email...', error);
+                        authErrorEl.textContent = 'Failed to send security code. Please check your network connection.';
+                        authErrorEl.classList.remove('hidden');
+                        
+                        submitBtn.textContent = originalText;
+                        submitBtn.disabled = false;
+                    });
+            }
+
+            function handleAuthSubmit(e) {
+                e.preventDefault();
+                authErrorEl.classList.add('hidden');
+                
+                const idVal = authIdInput.value.trim();
+                const passVal = passwordInput.value;
+
+                if (!idVal || !passVal) {
+                    authErrorEl.textContent = 'Please fill out both fields.';
+                    authErrorEl.classList.remove('hidden');
+                    return;
+                }
+
+                if (isSetupMode) {
+                    localStorage.setItem(ADMIN_IDENTITY_KEY, idVal);
+                    sessionStorage.setItem('app_password', passVal);
+                    transactions = [];
+                    saveAndEncryptData(passVal);
+                    
+                    isSetupMode = false;
+                    unlockAppUI(idVal);
+                } else {
+                    const savedId = localStorage.getItem(ADMIN_IDENTITY_KEY);
+                    if (idVal !== savedId) {
+                        authErrorEl.textContent = 'Admin account not found. Check your Email.';
+                        authErrorEl.classList.remove('hidden');
+                        return;
+                    }
+                    
+                    if (loadAndDecryptData(passVal)) {
+                        pendingAuthData = { id: idVal, pass: passVal };
+                        // Calls the REAL EmailJS function
+                        send2FAEmail(idVal); 
+                    } else {
+                        authErrorEl.textContent = 'Incorrect password.';
+                        authErrorEl.classList.remove('hidden');
+                    }
+                }
+            }
+
+            function handle2FASubmit(e) {
+                e.preventDefault();
+                tfaErrorEl.classList.add('hidden');
+                
+                const userCode = tfaCodeInput.value.trim();
+
+                if (userCode === expected2FACode) {
+                    sessionStorage.setItem('app_password', pendingAuthData.pass);
+                    tfaScreen.classList.add('hidden');
+                    unlockAppUI(pendingAuthData.id);
+                } else {
+                    tfaErrorEl.textContent = 'Invalid code. Please check your email and try again.';
+                    tfaErrorEl.classList.remove('hidden');
+                }
+            }
+
+            function unlockAppUI(adminIdentity) {
+                authScreen.classList.add('hidden');
+                tfaScreen.classList.add('hidden');
+                appContainer.classList.remove('hidden');
+                adminDisplayName.textContent = adminIdentity;
+                initializeTracker();
+            }
+
+            function logoutApp() {
+                sessionStorage.removeItem('app_password');
+                location.reload();
+            }
+
+            function checkSessionLock() {
+                const sessionPassword = sessionStorage.getItem('app_password');
+                const savedId = localStorage.getItem(ADMIN_IDENTITY_KEY);
+                
+                if (sessionPassword && savedId) {
+                    if (loadAndDecryptData(sessionPassword)) {
+                        unlockAppUI(savedId);
+                    } else {
+                        sessionStorage.removeItem('app_password');
+                    }
+                }
+            }
+
+            // --- Encryption & Data Management ---
+            function loadAndDecryptData(password) {
+                const encryptedData = localStorage.getItem(ENCRYPTED_STORAGE_KEY);
+                if (!encryptedData) {
+                    transactions = [];
+                    return true;
+                }
+                try {
+                    const bytes = CryptoJS.AES.decrypt(encryptedData, password);
+                    const decryptedString = bytes.toString(CryptoJS.enc.Utf8);
+                    if (!decryptedString) return false;
+                    transactions = JSON.parse(decryptedString);
+                    return true;
+                } catch (e) {
+                    return false;
+                }
+            }
+
+            function saveAndEncryptData(password = null) {
+                const pass = password || sessionStorage.getItem('app_password');
+                if (!pass) return;
+                try {
+                    const dataString = JSON.stringify(transactions);
+                    const encryptedData = CryptoJS.AES.encrypt(dataString, pass).toString();
+                    localStorage.setItem(ENCRYPTED_STORAGE_KEY, encryptedData);
+                } catch (e) {}
+            }
+
+            // --- Core App Logic & Formatting ---
+            function generateID() { return crypto.randomUUID(); }
+
+            function formatCurrency(num) {
+                if (isPrivacyMode) return '*** RWF';
+                return new Intl.NumberFormat('fr-RW', {
+                    style: 'currency', currency: 'RWF', currencyDisplay: 'code', minimumFractionDigits: 0,
+                }).format(num);
+            }
+
+            function formatTimestamp(timestampString) {
+                if (!timestampString) return '';
+                const date = new Date(timestampString);
+                return date.toLocaleString('en-US', { year: 'numeric', month: 'short', day: 'numeric' });
+            }
+
+            function togglePrivacy() {
+                isPrivacyMode = !isPrivacyMode;
+                if (isPrivacyMode) {
+                    eyeOpenIcon.classList.add('hidden');
+                    eyeClosedIcon.classList.remove('hidden');
+                    privacyText.textContent = 'Show';
+                } else {
+                    eyeOpenIcon.classList.remove('hidden');
+                    eyeClosedIcon.classList.add('hidden');
+                    privacyText.textContent = 'Hide';
+                }
+                updateUI();
+            }
+
+            function getTransactionIcon(type) {
+                switch (type) {
+                    case 'income': return `<svg class="w-5 h-5 text-green-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v6m3-3H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>`;
+                    case 'expense': return `<svg class="w-5 h-5 text-red-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15 12H9m12 0a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>`;
+                    case 'savings': return `<svg class="w-5 h-5 text-purple-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" /></svg>`;
+                    case 'log_debt': return `<svg class="w-5 h-5 text-orange-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" /></svg>`;
+                    case 'pay_debt': return `<svg class="w-5 h-5 text-teal-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg>`;
+                    default: return '';
+                }
+            }
+
+            function addTransactionDOM(transaction) {
+                const { id, description, amount, type, timestamp } = transaction;
+                const val = Math.abs(amount); 
+                
+                const item = document.createElement('li');
+                item.classList.add('transaction-item', 'flex', 'justify-between', 'items-center', 'bg-white', 'p-4', 'rounded-lg', 'border', 'border-gray-100', 'shadow-sm');
+
+                let amountSign = '-';
+                let amountClass = 'text-gray-600';
+
+                if (type === 'income') { amountSign = '+'; amountClass = 'text-green-600'; }
+                else if (type === 'expense') { amountSign = '-'; amountClass = 'text-red-600'; }
+                else if (type === 'savings') { amountSign = '-'; amountClass = 'text-purple-600'; }
+                else if (type === 'log_debt') { amountSign = '+'; amountClass = 'text-orange-600'; } 
+                else if (type === 'pay_debt') { amountSign = '-'; amountClass = 'text-teal-600'; } 
+
+                const displaySign = isPrivacyMode ? '' : amountSign;
+
+                item.innerHTML = `
+                    <div class="flex items-center gap-4 flex-grow">
+                        <div class="flex-shrink-0 bg-gray-50 p-2 rounded-full border border-gray-100">
+                            ${getTransactionIcon(type)}
+                        </div>
+                        <div>
+                            <span class="block font-semibold text-gray-800 text-base">${description}</span>
+                            <span class="block text-xs font-medium text-gray-400 mt-0.5">${formatTimestamp(timestamp)}</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center gap-4 flex-shrink-0">
+                        <span class="${amountClass} font-bold text-base text-right">
+                            ${displaySign}${formatCurrency(val)}
+                        </span>
+                        <button class="delete-btn text-gray-300 hover:text-red-500 hover:bg-red-50 p-1.5 rounded-md transition duration-200 opacity-0 md:opacity-100 focus:opacity-100" onclick="deleteTransaction('${id}')" title="Delete record">
+                            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"></polyline><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path><line x1="10" y1="11" x2="10" y2="17"></line><line x1="14" y1="11" x2="14" y2="17"></line></svg>
+                        </button>
+                    </div>
+                `;
+                listEl.appendChild(item);
+            }
+
+            function updateSummary(filteredTransactions) {
+                const totalData = filteredTransactions || transactions;
+                let totalIncome = 0; let totalExpense = 0; let totalSavings = 0;
+                let loggedDebts = 0; let paidDebts = 0;
+
+                totalData.forEach(t => {
+                    const val = Math.abs(t.amount);
+                    if (t.type === 'income') totalIncome += val;
+                    else if (t.type === 'expense') totalExpense += val;
+                    else if (t.type === 'savings') totalSavings += val;
+                    else if (t.type === 'log_debt') loggedDebts += val;
+                    else if (t.type === 'pay_debt') paidDebts += val;
+                });
+
+                const totalDebt = loggedDebts - paidDebts;
+                const netBalance = totalIncome - totalExpense - totalSavings - paidDebts;
+
+                balanceEl.textContent = formatCurrency(netBalance);
+                incomeEl.textContent = formatCurrency(totalIncome);
+                expenseEl.textContent = formatCurrency(totalExpense);
+                savingsEl.textContent = formatCurrency(totalSavings);
+                debtEl.textContent = formatCurrency(Math.max(0, totalDebt));
+            }
+
+            function updateFilterOptions() {
+                const currentVal = monthFilterEl.value;
+                monthFilterEl.innerHTML = '<option value="all">All Time</option>';
+                
+                const uniqueMonths = new Set();
+                transactions.forEach(t => {
+                    const date = new Date(t.timestamp);
+                    const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                    uniqueMonths.add(monthYear);
+                });
+
+                const sortedMonths = Array.from(uniqueMonths).sort().reverse();
+                
+                sortedMonths.forEach(my => {
+                    const [year, month] = my.split('-');
+                    const dateObj = new Date(year, month - 1);
+                    const label = dateObj.toLocaleString('en-US', { month: 'long', year: 'numeric' });
+                    const option = document.createElement('option');
+                    option.value = my; option.textContent = label;
+                    monthFilterEl.appendChild(option);
+                });
+
+                if (sortedMonths.includes(currentVal)) { monthFilterEl.value = currentVal; } 
+                else { monthFilterEl.value = 'all'; }
+            }
+
+            function updateUI() {
+                updateFilterOptions();
+                const filterVal = monthFilterEl.value;
+                let dataToRender = transactions;
+                
+                if (filterVal !== 'all') {
+                    dataToRender = transactions.filter(t => {
+                        const date = new Date(t.timestamp);
+                        const monthYear = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                        return monthYear === filterVal;
+                    });
+                }
+
+                listEl.innerHTML = '';
+                if (dataToRender.length === 0) {
+                    listEl.innerHTML = '<li id="no-transactions" class="text-gray-500 text-center py-8 bg-gray-50 rounded-lg border border-dashed border-gray-300">No entries found for this period.</li>';
+                } else {
+                    dataToRender.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).forEach(addTransactionDOM);
+                }
+                updateSummary(dataToRender);
+            }
+
+            function handleAddTransaction(e) {
+                e.preventDefault();
+                formErrorEl.classList.add('hidden');
+
+                const description = descriptionInput.value.trim();
+                const amount = parseFloat(amountInput.value);
+                const type = typeSelect.value;
+                const dateValue = dateInput.value;
+
+                if (!description || isNaN(amount) || amount <= 0 || !dateValue) {
+                    formErrorEl.textContent = 'Please fill out all fields correctly.';
+                    formErrorEl.classList.remove('hidden');
+                    return;
+                }
+
+                const transactionDate = new Date(dateValue + 'T12:00:00Z').toISOString();
+                const transaction = { id: generateID(), description, amount: amount, type, timestamp: transactionDate };
+
+                transactions.push(transaction);
+                saveAndEncryptData(); 
+                
+                monthFilterEl.value = 'all'; 
+                updateUI(); 
+
+                descriptionInput.value = '';
+                amountInput.value = '';
+                dateInput.valueAsDate = new Date(); 
+                typeSelect.value = 'income';
+            }
+
+            window.deleteTransaction = (id) => {
+                transactions = transactions.filter(t => t.id !== id);
+                saveAndEncryptData();
+                updateUI();
+            }
+
+            function clearAllData() {
+                transactions = [];
+                saveAndEncryptData();
+                updateUI();
+                modalBackdrop.classList.add('hidden');
+            }
+
+            // --- Event Listeners Setup ---
+            function initializeTracker() {
+                form.addEventListener('submit', handleAddTransaction);
+                monthFilterEl.addEventListener('change', updateUI);
+                togglePrivacyBtn.addEventListener('click', togglePrivacy);
+
+                showClearBtn.addEventListener('click', () => modalBackdrop.classList.remove('hidden'));
+                cancelClearBtn.addEventListener('click', () => modalBackdrop.classList.add('hidden'));
+                modalBackdrop.addEventListener('click', (e) => { if (e.target === modalBackdrop) modalBackdrop.classList.add('hidden'); });
+                confirmClearBtn.addEventListener('click', clearAllData);
+
+                logoutBtn.addEventListener('click', logoutApp);
+
+                updateUI();
+            }
+            
+            authForm.addEventListener('submit', handleAuthSubmit);
+            tfaForm.addEventListener('submit', handle2FASubmit);
+            checkSessionLock();
+        });
+    </script>
+</body>
+</html>

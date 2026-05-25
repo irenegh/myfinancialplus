@@ -3,31 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Financial Manager | Cloud Access</title>
+    <title>Financial Plus | Cloud Ledger</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script>
         tailwind.config = {
             theme: {
-                extend: {
-                    fontFamily: { sans: ['Inter', 'sans-serif'] },
-                },
+                extend: { fontFamily: { sans: ['Inter', 'sans-serif'] } },
             },
         }
     </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/crypto-js/4.2.0/crypto-js.min.js"></script>
-    
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    <script type="text/javascript">
-        (function() {
-            emailjs.init("Qao9oqZEyQbiMCFzh"); 
-        })();
-    </script>
-
     <style>
         #transaction-list::-webkit-scrollbar { width: 6px; }
         #transaction-list::-webkit-scrollbar-track { background: #f1f5f9; border-radius: 10px; }
         #transaction-list::-webkit-scrollbar-thumb { background: #94a3b8; border-radius: 10px; }
-        #transaction-list::-webkit-scrollbar-thumb:hover { background: #64748b; }
         .transaction-item:hover .delete-btn { opacity: 1; }
     </style>
 </head>
@@ -42,47 +30,28 @@
                     </svg>
                 </div>
             </div>
-            <h2 id="auth-title" class="text-2xl font-bold text-gray-800 text-center mb-2">Cloud Ledger</h2>
-            <p id="auth-subtitle" class="text-gray-500 text-center text-sm mb-6">Enter credentials to decrypt and sync data.</p>
+            <h2 id="auth-title" class="text-2xl font-bold text-gray-800 text-center mb-2">Welcome Back</h2>
+            <p id="auth-subtitle" class="text-gray-500 text-center text-sm mb-6">Sign in to sync your financial data.</p>
             
             <form id="auth-form" class="space-y-4">
                 <div>
-                    <label for="auth-id" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
-                    <input type="email" id="auth-id" placeholder="admin@example.com" class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    <label for="auth-email" class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                    <input type="email" id="auth-email" placeholder="you@example.com" class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required>
                 </div>
                 <div>
-                    <label for="password" class="block text-sm font-medium text-gray-700 mb-1">Decryption Password</label>
-                    <input type="password" id="password" placeholder="••••••••" class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required>
+                    <label for="auth-password" class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                    <input type="password" id="auth-password" placeholder="••••••••" class="w-full px-4 py-2 border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500" required minlength="6">
                 </div>
                 <button type="submit" id="auth-submit-btn" class="w-full bg-blue-600 text-white font-semibold py-2.5 px-4 rounded-lg shadow-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition duration-200 mt-2">
-                    Verify Identity
+                    Sign In
                 </button>
             </form>
-            <p id="auth-error" class="text-red-500 text-sm mt-4 text-center hidden font-medium"></p>
-        </div>
-    </div>
-
-    <div id="tfa-screen" class="w-full max-w-sm hidden mt-12 md:mt-24">
-        <div class="bg-white shadow-xl rounded-2xl p-6 md:p-8 border border-gray-100 text-center">
-            <div class="flex justify-center mb-4">
-                <div class="bg-indigo-100 p-3 rounded-full text-indigo-600">
-                    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-8 h-8">
-                        <path stroke-linecap="round" stroke-linejoin="round" d="M21.75 6.75v10.5a2.25 2.25 0 0 1-2.25 2.25h-15a2.25 2.25 0 0 1-2.25-2.25V6.75m19.5 0A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25m19.5 0v.243a2.25 2.25 0 0 1-1.07 1.916l-7.5 4.615a2.25 2.25 0 0 1-2.36 0L3.32 8.91a2.25 2.25 0 0 1-1.07-1.916V6.75" />
-                    </svg>
-                </div>
-            </div>
-            <h2 class="text-2xl font-bold text-gray-800 mb-2">Check Your Email</h2>
-            <p class="text-gray-500 text-sm mb-6">We've sent a 6-digit security code to <span id="tfa-email-display" class="font-bold text-gray-700"></span>.</p>
             
-            <form id="tfa-form" class="space-y-4">
-                <div>
-                    <input type="text" id="tfa-code" placeholder="000000" maxlength="6" class="w-full px-4 py-3 text-center text-2xl tracking-widest border border-gray-300 rounded-lg shadow-sm focus:outline-none focus:ring-2 focus:ring-indigo-500" required autocomplete="off">
-                </div>
-                <button type="submit" class="w-full bg-indigo-600 text-white font-semibold py-2.5 px-4 rounded-lg shadow-md hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 transition duration-200 mt-2">
-                    Unlock Dashboard
-                </button>
-            </form>
-            <p id="tfa-error" class="text-red-500 text-sm mt-4 text-center hidden font-medium"></p>
+            <div class="mt-6 text-center text-sm">
+                <span id="auth-toggle-text" class="text-gray-600">Don't have an account?</span>
+                <button id="auth-toggle-btn" class="text-blue-600 font-semibold hover:underline focus:outline-none">Sign Up</button>
+            </div>
+            <p id="auth-error" class="text-red-500 text-sm mt-4 text-center hidden font-medium"></p>
         </div>
     </div>
 
@@ -92,7 +61,7 @@
                 <h1 class="text-2xl font-bold text-gray-900">Financial Dashboard</h1>
                 <p class="text-sm text-gray-500 mt-1 flex items-center gap-1.5">
                     <span class="w-2 h-2 rounded-full bg-green-500 animate-pulse"></span>
-                    Verified Session: <span id="admin-display-name" class="font-semibold text-gray-700"></span>
+                    Account: <span id="user-display-email" class="font-semibold text-gray-700"></span>
                 </p>
             </div>
             
@@ -101,7 +70,7 @@
                     <option value="all">All Time</option>
                 </select>
                 
-                <button id="toggle-privacy-btn" class="text-sm px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium transition duration-200 flex items-center gap-2" title="Hide/Show Balances">
+                <button id="toggle-privacy-btn" class="text-sm px-3 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 font-medium transition duration-200 flex items-center gap-2">
                     <svg id="eye-open-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4"><path stroke-linecap="round" stroke-linejoin="round" d="M2.036 12.322a1.012 1.012 0 0 1 0-.639C3.423 7.51 7.36 4.5 12 4.5c4.638 0 8.573 3.007 9.963 7.178.07.207.07.431 0 .639C20.577 16.49 16.64 19.5 12 19.5c-4.638 0-8.573-3.007-9.963-7.178Z" /><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" /></svg>
                     <svg id="eye-closed-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-4 h-4 hidden"><path stroke-linecap="round" stroke-linejoin="round" d="M3.98 8.223A10.477 10.477 0 0 0 1.934 12C3.226 16.338 7.244 19.5 12 19.5c.993 0 1.953-.138 2.863-.395M6.228 6.228A10.451 10.451 0 0 1 12 4.5c4.756 0 8.773 3.162 10.065 7.498a10.522 10.522 0 0 1-4.293 5.774M6.228 6.228 3 3m3.228 3.228 3.65 3.65m7.894 7.894L21 21m-3.228-3.228-3.65-3.65m0 0a3 3 0 1 0-4.243-4.243m4.242 4.242L9.88 9.88" /></svg>
                     <span id="privacy-text" class="hidden sm:inline">Hide</span>
@@ -120,7 +89,7 @@
                     <div class="bg-blue-100 p-1.5 rounded-md"><svg class="w-4 h-4 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M21 12a2.25 2.25 0 0 1-2.25 2.25H5.25a2.25 2.25 0 0 1-2.25-2.25V5.25A2.25 2.25 0 0 1 5.25 3h13.5A2.25 2.25 0 0 1 21 5.25V12ZM10.5 16.5c0 .966-.784 1.75-1.75 1.75h-1.5a1.75 1.75 0 1 1 0-3.5h1.5a1.75 1.75 0 0 1 1.75 1.75v.5Z" /></svg></div>
                     <h2 class="text-xs font-bold text-blue-700 uppercase tracking-wide">Net Balance</h2>
                 </div>
-                <p id="balance" class="text-xl font-bold text-blue-900 break-all">0 RWF</p>
+                <p id="balance" class="text-xl font-bold text-blue-900 break-all">...</p>
             </div>
             
             <div class="bg-green-50 p-4 rounded-xl shadow-sm flex flex-col justify-center border border-green-100">
@@ -128,7 +97,7 @@
                     <div class="bg-green-100 p-1.5 rounded-md"><svg class="w-4 h-4 text-green-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" /></svg></div>
                     <h2 class="text-xs font-bold text-green-700 uppercase tracking-wide">Income</h2>
                 </div>
-                <p id="total-income" class="text-xl font-bold text-green-900 break-all">0 RWF</p>
+                <p id="total-income" class="text-xl font-bold text-green-900 break-all">...</p>
             </div>
 
             <div class="bg-red-50 p-4 rounded-xl shadow-sm flex flex-col justify-center border border-red-100">
@@ -136,7 +105,7 @@
                     <div class="bg-red-100 p-1.5 rounded-md"><svg class="w-4 h-4 text-red-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 6 9 12.75l4.306-4.306a11.95 11.95 0 0 1 5.814 5.518l2.74 1.22m0 0-5.94 2.281m5.94-2.28-2.28-5.941" /></svg></div>
                     <h2 class="text-xs font-bold text-red-700 uppercase tracking-wide">Expense</h2>
                 </div>
-                <p id="total-expense" class="text-xl font-bold text-red-900 break-all">0 RWF</p>
+                <p id="total-expense" class="text-xl font-bold text-red-900 break-all">...</p>
             </div>
 
             <div class="bg-purple-50 p-4 rounded-xl shadow-sm flex flex-col justify-center border border-purple-100">
@@ -144,7 +113,7 @@
                     <div class="bg-purple-100 p-1.5 rounded-md"><svg class="w-4 h-4 text-purple-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5-3.75H3.75" /></svg></div>
                     <h2 class="text-xs font-bold text-purple-700 uppercase tracking-wide">Savings</h2>
                 </div>
-                <p id="total-savings" class="text-xl font-bold text-purple-900 break-all">0 RWF</p>
+                <p id="total-savings" class="text-xl font-bold text-purple-900 break-all">...</p>
             </div>
 
             <div class="bg-orange-50 p-4 rounded-xl shadow-sm flex flex-col justify-center border border-orange-100">
@@ -152,7 +121,7 @@
                     <div class="bg-orange-100 p-1.5 rounded-md"><svg class="w-4 h-4 text-orange-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 6v12m-3-2.818.879.659c1.171.879 3.07.879 4.242 0 1.172-.879 1.172-2.303 0-3.182C13.536 12.219 12.768 12 12 12c-.725 0-1.45-.22-2.003-.659-1.106-.879-1.106-2.303 0-3.182s2.9-.879 4.006 0l.415.33M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" /></svg></div>
                     <h2 class="text-xs font-bold text-orange-700 uppercase tracking-wide">Active Debt</h2>
                 </div>
-                <p id="total-debt" class="text-xl font-bold text-orange-900 break-all">0 RWF</p>
+                <p id="total-debt" class="text-xl font-bold text-orange-900 break-all">...</p>
             </div>
         </section>
 
@@ -183,7 +152,7 @@
                 </div>
                 <div class="flex items-end md:col-span-2 lg:col-span-4">
                     <button type="submit" id="save-transaction-btn" class="w-full bg-gray-900 text-white font-semibold py-2.5 px-4 rounded-lg shadow-md hover:bg-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2 transition duration-200">
-                        Save Transaction to Ledger
+                        Save Transaction
                     </button>
                 </div>
             </form>
@@ -193,44 +162,20 @@
         <section id="history">
             <div class="flex justify-between items-center mb-4">
                 <h2 class="text-lg font-bold text-gray-800">Ledger History</h2>
-                <button id="show-clear-btn" class="text-sm text-red-600 hover:text-red-800 font-semibold transition duration-200">Erase Database</button>
             </div>
             <ul id="transaction-list" class="max-h-80 overflow-y-auto pr-2 space-y-2">
-                <li id="no-transactions" class="text-gray-500 text-center py-8 bg-gray-50 rounded-lg border border-dashed border-gray-300">No entries in the ledger yet.</li>
+                <li id="no-transactions" class="text-gray-500 text-center py-8 bg-gray-50 rounded-lg border border-dashed border-gray-300">Loading data...</li>
             </ul>
         </section>
-
-        <footer class="mt-12 pt-8 border-t border-gray-200 flex flex-col md:flex-row items-center md:items-start gap-6 text-gray-600 bg-gray-50 p-6 rounded-xl border">
-            <img src="https://ui-avatars.com/api/?name=Irene+SIBO&background=0D8ABC&color=fff&size=128" alt="My Photo" class="w-20 h-20 rounded-full object-cover border-4 border-white shadow-md">
-            <div class="text-center md:text-left">
-                <h3 class="text-base font-bold text-gray-900">About This Tracker</h3>
-                <p class="text-sm mt-2 leading-relaxed max-w-3xl text-gray-600">
-                    This is a personal, secure financial ledger engineered to manage daily income, track expenses, and monitor debt repayment. Powered by Firebase Firestore, it uses client-side AES encryption to ensure that all financial data remains secure and private.
-                </p>
-            </div>
-        </footer>
-    </div>
-
-    <div id="modal-backdrop" class="fixed inset-0 bg-gray-900 bg-opacity-60 flex items-center justify-center p-4 hidden z-50 transition-opacity">
-        <div class="bg-white rounded-xl shadow-2xl p-6 w-full max-w-sm">
-            <div class="flex items-center gap-3 mb-4 text-red-600">
-                <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6"><path stroke-linecap="round" stroke-linejoin="round" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3Z" /></svg>
-                <h3 class="text-xl font-bold text-gray-900">Confirm Deletion</h3>
-            </div>
-            <p class="text-gray-600 mb-6 leading-relaxed">Are you absolutely sure you want to delete all transaction data? This action will permanently erase your cloud ledger.</p>
-            <div class="flex justify-end gap-3">
-                <button id="cancel-clear-btn" class="px-4 py-2 bg-gray-100 text-gray-800 font-medium rounded-lg hover:bg-gray-200 transition duration-200">Cancel</button>
-                <button id="confirm-clear-btn" class="px-4 py-2 bg-red-600 text-white font-medium rounded-lg hover:bg-red-700 shadow-md transition duration-200">Yes, Erase Data</button>
-            </div>
-        </div>
     </div>
 
     <script type="module">
-        // Import Firebase modules securely
+        // 1. Import Firebase securely
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+        import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
-        // Firebase Configuration (From your snippet)
+        // 2. Your Exact Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyC0IubcRgd4A5MOsLxGLqzztxzLscjxu4k",
             authDomain: "myfinancialplus-91d8e.firebaseapp.com",
@@ -241,215 +186,188 @@
             measurementId: "G-Q6MKYYXP2K"
         };
 
-        // Initialize Firebase & Database
         const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // --- State ---
+        // --- Global State ---
         let transactions = [];
-        const ENCRYPTED_STORAGE_KEY = 'transactions_encrypted';
-        const ADMIN_IDENTITY_KEY = 'admin_identity';
-        
-        let isSetupMode = !localStorage.getItem(ADMIN_IDENTITY_KEY);
-        let expected2FACode = "";
-        let pendingAuthData = {}; 
+        let currentUser = null;
+        let isSignUpMode = false;
         let isPrivacyMode = false;
 
-        // --- UI Elements ---
+        // --- DOM Elements ---
         const authScreen = document.getElementById('auth-screen');
-        const tfaScreen = document.getElementById('tfa-screen');
         const appContainer = document.getElementById('app-container');
-        
         const authForm = document.getElementById('auth-form');
-        const authIdInput = document.getElementById('auth-id');
-        const passwordInput = document.getElementById('password');
-        const authErrorEl = document.getElementById('auth-error');
+        const authEmailInput = document.getElementById('auth-email');
+        const authPasswordInput = document.getElementById('auth-password');
+        const authSubmitBtn = document.getElementById('auth-submit-btn');
+        const authToggleBtn = document.getElementById('auth-toggle-btn');
         const authTitle = document.getElementById('auth-title');
         const authSubtitle = document.getElementById('auth-subtitle');
-        const authSubmitBtn = document.getElementById('auth-submit-btn');
-        
-        const tfaForm = document.getElementById('tfa-form');
-        const tfaCodeInput = document.getElementById('tfa-code');
-        const tfaErrorEl = document.getElementById('tfa-error');
-        const tfaEmailDisplay = document.getElementById('tfa-email-display');
+        const authToggleText = document.getElementById('auth-toggle-text');
+        const authErrorEl = document.getElementById('auth-error');
 
         const logoutBtn = document.getElementById('logout-btn');
-        const adminDisplayName = document.getElementById('admin-display-name');
+        const userDisplayEmail = document.getElementById('user-display-email');
         const togglePrivacyBtn = document.getElementById('toggle-privacy-btn');
-        
-        const balanceEl = document.getElementById('balance');
-        const incomeEl = document.getElementById('total-income');
-        const expenseEl = document.getElementById('total-expense');
-        const savingsEl = document.getElementById('total-savings');
-        const debtEl = document.getElementById('total-debt');
-        const listEl = document.getElementById('transaction-list');
-        const form = document.getElementById('transaction-form');
         const monthFilterEl = document.getElementById('month-filter');
+        const listEl = document.getElementById('transaction-list');
         const saveTransactionBtn = document.getElementById('save-transaction-btn');
 
-        // Setup Initial UI
-        if (isSetupMode) {
-            authTitle.textContent = "Set Up Cloud Ledger";
-            authSubtitle.textContent = "Create master credentials to encrypt your database.";
-            authSubmitBtn.textContent = "Create Secure Database";
-        }
         document.getElementById('transaction-date').valueAsDate = new Date();
 
-        // --- Firebase Cloud Data Management ---
-        async function loadAndDecryptData(password) {
-            const email = localStorage.getItem(ADMIN_IDENTITY_KEY);
-            if (!email) return false;
+        // --- Auth Listeners & Actions ---
 
-            try {
-                // 1. Fetch from Firebase
-                const docSnap = await getDoc(doc(db, "ledgers", email));
-                
-                if (docSnap.exists()) {
-                    const encryptedData = docSnap.data().data;
-                    const bytes = CryptoJS.AES.decrypt(encryptedData, password);
-                    const decryptedString = bytes.toString(CryptoJS.enc.Utf8);
-                    
-                    if (!decryptedString) return false; // Wrong Password
-                    transactions = JSON.parse(decryptedString);
-                    return true;
-                } else {
-                    // 2. Migration Step (If they have local data but no cloud data yet)
-                    const localData = localStorage.getItem(ENCRYPTED_STORAGE_KEY);
-                    if (localData) {
-                        const bytes = CryptoJS.AES.decrypt(localData, password);
-                        const decryptedString = bytes.toString(CryptoJS.enc.Utf8);
-                        if (decryptedString) {
-                            transactions = JSON.parse(decryptedString);
-                            await saveAndEncryptData(password); // Push to cloud
-                            return true;
-                        }
-                    }
-                    // 3. Completely new database
-                    transactions = [];
-                    return true;
-                }
-            } catch (e) {
-                console.error("Cloud Database Error:", e);
-                return false;
+        // Listen for Login/Logout state changes automatically
+        onAuthStateChanged(auth, (user) => {
+            if (user) {
+                currentUser = user;
+                authScreen.classList.add('hidden');
+                appContainer.classList.remove('hidden');
+                userDisplayEmail.textContent = user.email;
+                fetchDataFromCloud();
+            } else {
+                currentUser = null;
+                appContainer.classList.add('hidden');
+                authScreen.classList.remove('hidden');
             }
-        }
+        });
 
-        async function saveAndEncryptData(password = null) {
-            const pass = password || sessionStorage.getItem('app_password');
-            const email = localStorage.getItem(ADMIN_IDENTITY_KEY);
-            if (!pass || !email) return;
-
-            try {
-                const dataString = JSON.stringify(transactions);
-                const encryptedData = CryptoJS.AES.encrypt(dataString, pass).toString();
-                
-                // Save to Firebase Cloud
-                await setDoc(doc(db, "ledgers", email), { data: encryptedData, lastUpdated: new Date().toISOString() });
-                
-                // Also save locally as offline backup
-                localStorage.setItem(ENCRYPTED_STORAGE_KEY, encryptedData);
-            } catch (e) {
-                console.error("Failed to sync to cloud. Check Firebase Rules.", e);
+        // Toggle between Sign In and Sign Up visually
+        authToggleBtn.addEventListener('click', () => {
+            isSignUpMode = !isSignUpMode;
+            authErrorEl.classList.add('hidden');
+            if(isSignUpMode) {
+                authTitle.textContent = "Create Account";
+                authSubtitle.textContent = "Sign up to track your finances anywhere.";
+                authSubmitBtn.textContent = "Sign Up";
+                authToggleText.textContent = "Already have an account?";
+                authToggleBtn.textContent = "Sign In";
+            } else {
+                authTitle.textContent = "Welcome Back";
+                authSubtitle.textContent = "Sign in to sync your financial data.";
+                authSubmitBtn.textContent = "Sign In";
+                authToggleText.textContent = "Don't have an account?";
+                authToggleBtn.textContent = "Sign Up";
             }
-        }
+        });
 
-        // --- Authentication & EmailJS ---
-        function send2FAEmail(email) {
-            expected2FACode = Math.floor(100000 + Math.random() * 900000).toString();
-            const originalText = authSubmitBtn.textContent;
-            authSubmitBtn.textContent = "Sending Code...";
-            authSubmitBtn.disabled = true;
-
-            emailjs.send('service_tdhrmp9', 'template_o5mi6ms', { to_email: email, security_code: expected2FACode })
-                .then(function() {
-                    authScreen.classList.add('hidden');
-                    tfaScreen.classList.remove('hidden');
-                    tfaEmailDisplay.textContent = email;
-                    tfaCodeInput.focus();
-                    authSubmitBtn.textContent = originalText;
-                    authSubmitBtn.disabled = false;
-                }, function(error) {
-                    authErrorEl.textContent = 'Network error sending 2FA code.';
-                    authErrorEl.classList.remove('hidden');
-                    authSubmitBtn.textContent = originalText;
-                    authSubmitBtn.disabled = false;
-                });
-        }
-
-        async function handleAuthSubmit(e) {
+        // Handle Form Submit for Firebase Auth
+        authForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             authErrorEl.classList.add('hidden');
-            const idVal = authIdInput.value.trim();
-            const passVal = passwordInput.value;
-
-            if (!idVal || !passVal) return;
-
-            authSubmitBtn.textContent = "Verifying Securely...";
+            const email = authEmailInput.value.trim();
+            const password = authPasswordInput.value;
+            
+            authSubmitBtn.textContent = "Processing...";
             authSubmitBtn.disabled = true;
 
-            if (isSetupMode) {
-                localStorage.setItem(ADMIN_IDENTITY_KEY, idVal);
-                sessionStorage.setItem('app_password', passVal);
-                transactions = [];
-                await saveAndEncryptData(passVal);
-                isSetupMode = false;
-                unlockAppUI(idVal);
-            } else {
-                const savedId = localStorage.getItem(ADMIN_IDENTITY_KEY);
-                if (idVal !== savedId) {
-                    authErrorEl.textContent = 'Admin account not found.';
-                    authErrorEl.classList.remove('hidden');
-                    authSubmitBtn.textContent = "Verify Identity";
-                    authSubmitBtn.disabled = false;
-                    return;
-                }
-                
-                const success = await loadAndDecryptData(passVal);
-                if (success) {
-                    pendingAuthData = { id: idVal, pass: passVal };
-                    send2FAEmail(idVal); 
+            try {
+                if (isSignUpMode) {
+                    await createUserWithEmailAndPassword(auth, email, password);
                 } else {
-                    authErrorEl.textContent = 'Incorrect decryption password.';
-                    authErrorEl.classList.remove('hidden');
-                    authSubmitBtn.textContent = "Verify Identity";
-                    authSubmitBtn.disabled = false;
+                    await signInWithEmailAndPassword(auth, email, password);
                 }
+            } catch (error) {
+                authErrorEl.textContent = error.message.replace("Firebase: ", "");
+                authErrorEl.classList.remove('hidden');
+            } finally {
+                authSubmitBtn.textContent = isSignUpMode ? "Sign Up" : "Sign In";
+                authSubmitBtn.disabled = false;
+            }
+        });
+
+        // Handle Logout
+        logoutBtn.addEventListener('click', () => {
+            signOut(auth);
+        });
+
+        // --- Cloud Data Operations ---
+
+        async function fetchDataFromCloud() {
+            if (!currentUser) return;
+            try {
+                // Query Firestore: "Get all transactions where userId matches my UID, ordered by date"
+                const q = query(
+                    collection(db, "transactions"), 
+                    where("userId", "==", currentUser.uid),
+                    orderBy("timestamp", "desc")
+                );
+                
+                const querySnapshot = await getDocs(q);
+                transactions = [];
+                querySnapshot.forEach((doc) => {
+                    transactions.push({ id: doc.id, ...doc.data() });
+                });
+                
+                updateUI();
+            } catch (error) {
+                console.error("Error fetching data: ", error);
+                listEl.innerHTML = '<li class="text-red-500 text-center py-4">Error loading data. Check Firestore Rules.</li>';
             }
         }
 
-        function handle2FASubmit(e) {
+        document.getElementById('transaction-form').addEventListener('submit', async (e) => {
             e.preventDefault();
-            tfaErrorEl.classList.add('hidden');
-            if (tfaCodeInput.value.trim() === expected2FACode) {
-                sessionStorage.setItem('app_password', pendingAuthData.pass);
-                tfaScreen.classList.add('hidden');
-                unlockAppUI(pendingAuthData.id);
-            } else {
-                tfaErrorEl.textContent = 'Invalid security code.';
-                tfaErrorEl.classList.remove('hidden');
+            document.getElementById('form-error').classList.add('hidden');
+            const desc = document.getElementById('description').value.trim();
+            const amt = parseFloat(document.getElementById('amount').value);
+            const dateVal = document.getElementById('transaction-date').value;
+
+            if (!desc || isNaN(amt) || amt <= 0 || !dateVal || !currentUser) return;
+
+            saveTransactionBtn.textContent = "Saving to Cloud...";
+            saveTransactionBtn.disabled = true;
+
+            const newTx = {
+                userId: currentUser.uid, // Tag the document with the user's ID
+                description: desc,
+                amount: amt,
+                type: document.getElementById('type').value,
+                timestamp: new Date(dateVal + 'T12:00:00Z').toISOString()
+            };
+
+            try {
+                // Add to Firebase
+                const docRef = await addDoc(collection(db, "transactions"), newTx);
+                
+                // Add to local array to update UI instantly without reloading
+                transactions.unshift({ id: docRef.id, ...newTx });
+                
+                // Reset Form
+                document.getElementById('description').value = '';
+                document.getElementById('amount').value = '';
+                document.getElementById('transaction-date').valueAsDate = new Date(); 
+                monthFilterEl.value = 'all';
+                updateUI();
+
+            } catch (error) {
+                console.error("Error adding transaction: ", error);
+                document.getElementById('form-error').textContent = "Database error. Check permissions.";
+                document.getElementById('form-error').classList.remove('hidden');
+            } finally {
+                saveTransactionBtn.textContent = "Save Transaction";
+                saveTransactionBtn.disabled = false;
             }
-        }
+        });
 
-        function unlockAppUI(adminIdentity) {
-            authScreen.classList.add('hidden');
-            tfaScreen.classList.add('hidden');
-            appContainer.classList.remove('hidden');
-            adminDisplayName.textContent = adminIdentity;
-            initializeTracker();
-        }
-
-        async function checkSessionLock() {
-            const sessionPassword = sessionStorage.getItem('app_password');
-            const savedId = localStorage.getItem(ADMIN_IDENTITY_KEY);
-            if (sessionPassword && savedId) {
-                const success = await loadAndDecryptData(sessionPassword);
-                if (success) unlockAppUI(savedId);
-                else sessionStorage.removeItem('app_password');
+        // Global Delete function
+        window.deleteTransaction = async (id) => {
+            if (!confirm("Delete this transaction permanently?")) return;
+            try {
+                await deleteDoc(doc(db, "transactions", id));
+                transactions = transactions.filter(t => t.id !== id);
+                updateUI();
+            } catch (error) {
+                console.error("Error deleting document: ", error);
+                alert("Error deleting. Check your permissions.");
             }
-        }
+        };
 
-        // --- Core App Logic ---
-        function generateID() { return crypto.randomUUID(); }
+
+        // --- Formatting & UI Logic ---
 
         function formatCurrency(num) {
             if (isPrivacyMode) return '*** RWF';
@@ -466,6 +384,16 @@
                 default: return '';
             }
         }
+
+        togglePrivacyBtn.addEventListener('click', () => {
+            isPrivacyMode = !isPrivacyMode;
+            document.getElementById('eye-open-icon').classList.toggle('hidden', isPrivacyMode);
+            document.getElementById('eye-closed-icon').classList.toggle('hidden', !isPrivacyMode);
+            document.getElementById('privacy-text').textContent = isPrivacyMode ? 'Show' : 'Hide';
+            updateUI();
+        });
+
+        monthFilterEl.addEventListener('change', updateUI);
 
         function updateUI() {
             // Options Update
@@ -528,82 +456,12 @@
                 else if (t.type === 'log_debt') logD += val;
                 else if (t.type === 'pay_debt') payD += val;
             });
-            balanceEl.textContent = formatCurrency(inc - exp - sav - payD);
-            incomeEl.textContent = formatCurrency(inc);
-            expenseEl.textContent = formatCurrency(exp);
-            savingsEl.textContent = formatCurrency(sav);
-            debtEl.textContent = formatCurrency(Math.max(0, logD - payD));
+            document.getElementById('balance').textContent = formatCurrency(inc - exp - sav - payD);
+            document.getElementById('total-income').textContent = formatCurrency(inc);
+            document.getElementById('total-expense').textContent = formatCurrency(exp);
+            document.getElementById('total-savings').textContent = formatCurrency(sav);
+            document.getElementById('total-debt').textContent = formatCurrency(Math.max(0, logD - payD));
         }
-
-        async function handleAddTransaction(e) {
-            e.preventDefault();
-            document.getElementById('form-error').classList.add('hidden');
-            const desc = document.getElementById('description').value.trim();
-            const amt = parseFloat(document.getElementById('amount').value);
-            const dateVal = document.getElementById('transaction-date').value;
-
-            if (!desc || isNaN(amt) || amt <= 0 || !dateVal) return;
-
-            saveTransactionBtn.textContent = "Syncing to Cloud...";
-            saveTransactionBtn.disabled = true;
-
-            transactions.push({ id: generateID(), description: desc, amount: amt, type: document.getElementById('type').value, timestamp: new Date(dateVal + 'T12:00:00Z').toISOString() });
-            
-            await saveAndEncryptData(); 
-            monthFilterEl.value = 'all'; 
-            updateUI(); 
-
-            document.getElementById('description').value = '';
-            document.getElementById('amount').value = '';
-            document.getElementById('transaction-date').valueAsDate = new Date(); 
-            
-            saveTransactionBtn.textContent = "Save Transaction to Ledger";
-            saveTransactionBtn.disabled = false;
-        }
-
-        // Attach to window so HTML inline onclick works inside the module
-        window.deleteTransaction = async (id) => {
-            transactions = transactions.filter(t => t.id !== id);
-            updateUI();
-            await saveAndEncryptData();
-        };
-
-        function togglePrivacy() {
-            isPrivacyMode = !isPrivacyMode;
-            document.getElementById('eye-open-icon').classList.toggle('hidden', isPrivacyMode);
-            document.getElementById('eye-closed-icon').classList.toggle('hidden', !isPrivacyMode);
-            document.getElementById('privacy-text').textContent = isPrivacyMode ? 'Show' : 'Hide';
-            updateUI();
-        }
-
-        function initializeTracker() {
-            form.addEventListener('submit', handleAddTransaction);
-            monthFilterEl.addEventListener('change', updateUI);
-            togglePrivacyBtn.addEventListener('click', togglePrivacy);
-            document.getElementById('show-clear-btn').addEventListener('click', () => document.getElementById('modal-backdrop').classList.remove('hidden'));
-            document.getElementById('cancel-clear-btn').addEventListener('click', () => document.getElementById('modal-backdrop').classList.add('hidden'));
-            
-            document.getElementById('confirm-clear-btn').addEventListener('click', async () => {
-                transactions = [];
-                await saveAndEncryptData();
-                updateUI();
-                document.getElementById('modal-backdrop').classList.add('hidden');
-            });
-
-            logoutBtn.addEventListener('click', () => {
-                sessionStorage.removeItem('app_password');
-                location.reload();
-            });
-
-            updateUI();
-        }
-
-        // Setup Event Listeners
-        authForm.addEventListener('submit', handleAuthSubmit);
-        tfaForm.addEventListener('submit', handle2FASubmit);
-        
-        // Boot
-        checkSessionLock();
     </script>
 </body>
 </html>

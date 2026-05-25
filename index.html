@@ -110,7 +110,7 @@
 
             <div class="bg-purple-50 p-4 rounded-xl shadow-sm flex flex-col justify-center border border-purple-100">
                 <div class="flex items-center space-x-2 mb-2">
-                    <div class="bg-purple-100 p-1.5 rounded-md"><svg class="w-4 h-4 text-purple-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25 4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5-3.75H3.75" /></svg></div>
+                    <div class="bg-purple-100 p-1.5 rounded-md"><svg class="w-4 h-4 text-purple-600" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 6.375c0 2.278-3.694 4.125-8.25 4.125S3.75 8.653 3.75 6.375m16.5 0c0-2.278-3.694-4.125-8.25-4.125S3.75 4.097 3.75 6.375m16.5 0v11.25c0 2.278-3.694 4.125-8.25-4.125s-8.25-1.847-8.25-4.125V6.375m16.5 0v3.75m-16.5-3.75v3.75m16.5 0v3.75C20.25 16.153 16.556 18 12 18s-8.25-1.847-8.25-4.125v-3.75m16.5-3.75H3.75" /></svg></div>
                     <h2 class="text-xs font-bold text-purple-700 uppercase tracking-wide">Savings</h2>
                 </div>
                 <p id="total-savings" class="text-xl font-bold text-purple-900 break-all">...</p>
@@ -170,12 +170,10 @@
     </div>
 
     <script type="module">
-        // 1. Import Firebase securely (ADDED sendEmailVerification here)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
         import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
-        import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
+        import { getFirestore, collection, addDoc, getDocs, query, where, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
-        // 2. Your Exact Configuration
         const firebaseConfig = {
             apiKey: "AIzaSyC0IubcRgd4A5MOsLxGLqzztxzLscjxu4k",
             authDomain: "myfinancialplus-91d8e.firebaseapp.com",
@@ -190,13 +188,11 @@
         const auth = getAuth(app);
         const db = getFirestore(app);
 
-        // --- Global State ---
         let transactions = [];
         let currentUser = null;
         let isSignUpMode = false;
         let isPrivacyMode = false;
 
-        // --- DOM Elements ---
         const authScreen = document.getElementById('auth-screen');
         const appContainer = document.getElementById('app-container');
         const authForm = document.getElementById('auth-form');
@@ -218,16 +214,20 @@
 
         document.getElementById('transaction-date').valueAsDate = new Date();
 
-        // --- Auth Listeners & Actions ---
-
-        // Listen for Login/Logout state changes automatically
+        // UPDATED: Now checks for BOTH user existence AND email verification before fetching data
         onAuthStateChanged(auth, (user) => {
-            if (user) {
+            if (user && user.emailVerified) {
                 currentUser = user;
                 authScreen.classList.add('hidden');
                 appContainer.classList.remove('hidden');
                 userDisplayEmail.textContent = user.email;
                 fetchDataFromCloud();
+            } else if (user && !user.emailVerified) {
+                // If they are logged in but not verified, log them right back out
+                signOut(auth);
+                currentUser = null;
+                appContainer.classList.add('hidden');
+                authScreen.classList.remove('hidden');
             } else {
                 currentUser = null;
                 appContainer.classList.add('hidden');
@@ -235,7 +235,6 @@
             }
         });
 
-        // Toggle between Sign In and Sign Up visually
         authToggleBtn.addEventListener('click', () => {
             isSignUpMode = !isSignUpMode;
             authErrorEl.classList.add('hidden');
@@ -254,7 +253,6 @@
             }
         });
 
-        // Handle Form Submit for Firebase Auth
         authForm.addEventListener('submit', async (e) => {
             e.preventDefault();
             authErrorEl.classList.add('hidden');
@@ -266,12 +264,19 @@
 
             try {
                 if (isSignUpMode) {
-                    // UPDATED: Now creates the user and sends the verification email
                     const userCredential = await createUserWithEmailAndPassword(auth, email, password);
                     await sendEmailVerification(userCredential.user);
-                    alert("Account created successfully! Please check your email to verify your account.");
+                    await signOut(auth); // Log them out immediately
+                    
+                    alert("Account created! Please check your email (and spam folder) to verify before logging in.");
+                    authToggleBtn.click(); // Switch UI back to "Sign In" mode
                 } else {
-                    await signInWithEmailAndPassword(auth, email, password);
+                    const userCredential = await signInWithEmailAndPassword(auth, email, password);
+                    
+                    if (!userCredential.user.emailVerified) {
+                        await signOut(auth); // Log them back out if not verified
+                        throw new Error("Please verify your email address to access your dashboard. Check your spam folder!");
+                    }
                 }
             } catch (error) {
                 authErrorEl.textContent = error.message.replace("Firebase: ", "");
@@ -282,21 +287,17 @@
             }
         });
 
-        // Handle Logout
         logoutBtn.addEventListener('click', () => {
             signOut(auth);
         });
 
-        // --- Cloud Data Operations ---
-
         async function fetchDataFromCloud() {
             if (!currentUser) return;
             try {
-                // UPDATED: Changed "userId" to "uid" to match Firestore Rules
+                // UPDATED: Removed orderBy("timestamp", "desc") to prevent the annoying Firebase Index Error!
                 const q = query(
                     collection(db, "transactions"), 
-                    where("uid", "==", currentUser.uid),
-                    orderBy("timestamp", "desc")
+                    where("uid", "==", currentUser.uid)
                 );
                 
                 const querySnapshot = await getDocs(q);
@@ -324,7 +325,6 @@
             saveTransactionBtn.textContent = "Saving to Cloud...";
             saveTransactionBtn.disabled = true;
 
-            // UPDATED: Changed "userId" to "uid" to match Firestore Rules going forward
             const newTx = {
                 uid: currentUser.uid, 
                 description: desc,
@@ -334,13 +334,9 @@
             };
 
             try {
-                // Add to Firebase
                 const docRef = await addDoc(collection(db, "transactions"), newTx);
-                
-                // Add to local array to update UI instantly without reloading
                 transactions.unshift({ id: docRef.id, ...newTx });
                 
-                // Reset Form
                 document.getElementById('description').value = '';
                 document.getElementById('amount').value = '';
                 document.getElementById('transaction-date').valueAsDate = new Date(); 
@@ -357,7 +353,6 @@
             }
         });
 
-        // Global Delete function
         window.deleteTransaction = async (id) => {
             if (!confirm("Delete this transaction permanently?")) return;
             try {
@@ -369,9 +364,6 @@
                 alert("Error deleting. Check your permissions.");
             }
         };
-
-
-        // --- Formatting & UI Logic ---
 
         function formatCurrency(num) {
             if (isPrivacyMode) return '*** RWF';
@@ -400,7 +392,6 @@
         monthFilterEl.addEventListener('change', updateUI);
 
         function updateUI() {
-            // Options Update
             const currentVal = monthFilterEl.value;
             monthFilterEl.innerHTML = '<option value="all">All Time</option>';
             const uniqueMonths = new Set();
@@ -413,13 +404,13 @@
             });
             monthFilterEl.value = Array.from(uniqueMonths).includes(currentVal) ? currentVal : 'all';
 
-            // Filter & Render
             let dataToRender = monthFilterEl.value === 'all' ? transactions : transactions.filter(t => `${new Date(t.timestamp).getFullYear()}-${String(new Date(t.timestamp).getMonth() + 1).padStart(2, '0')}` === monthFilterEl.value);
             
             listEl.innerHTML = '';
             if (dataToRender.length === 0) {
                 listEl.innerHTML = '<li class="text-gray-500 text-center py-8 bg-gray-50 rounded-lg border border-dashed border-gray-300">No entries found.</li>';
             } else {
+                // Sorting happens directly here in the frontend now!
                 dataToRender.sort((a, b) => new Date(b.timestamp) - new Date(a.timestamp)).forEach(t => {
                     const item = document.createElement('li');
                     item.classList.add('transaction-item', 'flex', 'justify-between', 'items-center', 'bg-white', 'p-4', 'rounded-lg', 'border', 'border-gray-100', 'shadow-sm');
@@ -450,7 +441,6 @@
                 });
             }
 
-            // Summary Math
             let inc=0, exp=0, sav=0, logD=0, payD=0;
             dataToRender.forEach(t => {
                 const val = Math.abs(t.amount);

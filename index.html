@@ -170,9 +170,9 @@
     </div>
 
     <script type="module">
-        // 1. Import Firebase securely
+        // 1. Import Firebase securely (ADDED sendEmailVerification here)
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-app.js";
-        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
+        import { getAuth, createUserWithEmailAndPassword, signInWithEmailAndPassword, signOut, onAuthStateChanged, sendEmailVerification } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-auth.js";
         import { getFirestore, collection, addDoc, getDocs, query, where, orderBy, deleteDoc, doc } from "https://www.gstatic.com/firebasejs/10.11.0/firebase-firestore.js";
 
         // 2. Your Exact Configuration
@@ -266,7 +266,10 @@
 
             try {
                 if (isSignUpMode) {
-                    await createUserWithEmailAndPassword(auth, email, password);
+                    // UPDATED: Now creates the user and sends the verification email
+                    const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+                    await sendEmailVerification(userCredential.user);
+                    alert("Account created successfully! Please check your email to verify your account.");
                 } else {
                     await signInWithEmailAndPassword(auth, email, password);
                 }
@@ -289,10 +292,10 @@
         async function fetchDataFromCloud() {
             if (!currentUser) return;
             try {
-                // Query Firestore: "Get all transactions where userId matches my UID, ordered by date"
+                // UPDATED: Changed "userId" to "uid" to match Firestore Rules
                 const q = query(
                     collection(db, "transactions"), 
-                    where("userId", "==", currentUser.uid),
+                    where("uid", "==", currentUser.uid),
                     orderBy("timestamp", "desc")
                 );
                 
@@ -321,8 +324,9 @@
             saveTransactionBtn.textContent = "Saving to Cloud...";
             saveTransactionBtn.disabled = true;
 
+            // UPDATED: Changed "userId" to "uid" to match Firestore Rules going forward
             const newTx = {
-                userId: currentUser.uid, // Tag the document with the user's ID
+                uid: currentUser.uid, 
                 description: desc,
                 amount: amt,
                 type: document.getElementById('type').value,

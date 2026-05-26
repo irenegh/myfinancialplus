@@ -296,7 +296,7 @@
         async function fetchDataFromCloud() {
             if (!currentUser) return;
             try {
-                const q = query(collection(db, "transactions"), where("userId", "==", currentUser.uid), orderBy("timestamp", "desc"));
+                const q = query(collection(db, "transactions"), where("userId", "==", currentUser.uid));
                 const querySnapshot = await getDocs(q);
                 transactions = [];
                 querySnapshot.forEach((doc) => transactions.push({ id: doc.id, ...doc.data() }));
